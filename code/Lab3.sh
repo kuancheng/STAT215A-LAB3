@@ -1,3 +1,3 @@
 #!/bin/bash
 
-R --no-save < Lab3.R
+R CMD BATCH --no-save Lab3.R Lab3.Rout
