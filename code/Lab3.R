@@ -83,14 +83,15 @@ Similarity <- function(l1.inter, l2.inter, method ="matching") {
 
 
 
-
+#Time comparison between c++ and R of simliarty function
+#R
 start.time <- Sys.time()
 foreach(num.cluster = 2:k.max) %dopar% {
   sim.vec <- NULL
   for(i in 1:10){
    print(i)
-    sub1 <- SubSample(ling.ana, 0.008)
-    sub2 <- SubSample(ling.ana, 0.008)
+    sub1 <- SubSample(ling.ana, 0.4)
+    sub2 <- SubSample(ling.ana, 0.4)
     inter <- InterIndex(sub1, sub2)
    l1.inter <- kmeans(sub1, num.cluster)$cluster[inter$sub1.index]  
    l2.inter <- kmeans(sub2, num.cluster)$cluster[inter$sub2.index]
@@ -100,11 +101,27 @@ foreach(num.cluster = 2:k.max) %dopar% {
 }
 duration <- Sys.time() - start.time
 
+#c++
+start.time1 <- Sys.time()
+foreach(num.cluster = 2:k.max) %dopar% {
+  sim.vec1 <- NULL
+  for(i in 1:10){
+   print(i)
+    sub1 <- SubSample(ling.ana, 0.4)
+    sub2 <- SubSample(ling.ana, 0.4)
+    inter <- InterIndex(sub1, sub2)
+   l1.inter <- kmeans(sub1, num.cluster)$cluster[inter$sub1.index]  
+   l2.inter <- kmeans(sub2, num.cluster)$cluster[inter$sub2.index]
+   sim.vec1[i] <- SimilarityC(l1.inter, l2.inter, method = "matching")
+  }
+   return(sim.vec1)
+}
+duration1 <- Sys.time() - start.time1
 #Compare C++ and R for function similarity
-x1 <- sample(1:10, 29000, replace = TRUE)
-x2 <- sample(1:10, 29000, replace = TRUE)
-microbenchmark(Similarity(x1, x2, "matching"), SimilarityC(x1, x2, "matching"))
-Similarity(x1, x2, "matching")
-SimilarityC(x1, x2)
+# x1 <- sample(1:10, 29000, replace = TRUE)
+# x2 <- sample(1:10, 29000, replace = TRUE)
+# microbenchmark(Similarity(x1, x2, "matching"), SimilarityC(x1, x2, "matching"))
+# Similarity(x1, x2, "matching")
+# SimilarityC(x1, x2)
 
 
