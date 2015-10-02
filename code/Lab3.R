@@ -1,6 +1,11 @@
 #Read Library
 library('foreach')
 library('doParallel')
+library('Rcpp')
+library('microbenchmark')
+
+#source c++ similarity function
+sourceCpp('Lab3.cpp')
 
 #Read data
 load("../data/lingBinary.rdata")
@@ -95,18 +100,11 @@ foreach(num.cluster = 2:k.max) %dopar% {
 }
 duration <- Sys.time() - start.time
 
-print(duration)
+#Compare C++ and R for function similarity
+x1 <- sample(1:10, 29000, replace = TRUE)
+x2 <- sample(1:10, 29000, replace = TRUE)
+microbenchmark(Similarity(x1, x2, "matching"), SimilarityC(x1, x2, "matching"))
+Similarity(x1, x2, "matching")
+SimilarityC(x1, x2)
 
-#use for loop
-# start.time <- Sys.time()
-# for(num.cluster in 2:k.max) {
-#   for(i in 1:n){
-#    sub1 <- SubSample(ling.ana, 0.2)
-#    sub2 <- SubSample(ling.ana, 0.2)
-#    inter <- InterIndex(sub1, sub2)
-#    l1.inter <- kmeans(sub1, num.cluster)$cluster[inter$sub1.index]  
-#    l2.inter <- kmeans(sub2, num.cluster)$cluster[inter$sub2.index]
-#    print(Similarity(l1.inter, l2.inter, method = "matching"))
-#   }
-# }
-# duration2 <- Sys.time() - start.time
+
