@@ -1,14 +1,12 @@
-#Use foreach for outer loop of algorithm
-
-##Read Library
+#Read Library
 library('foreach')
 library('doParallel')
 
-##Read data
+#Read data
 load("../data/lingBinary.rdata")
 head(lingBinary)
 ling.ana <- lingBinary[,-1:-5]
-##Set up predefined argument##############################
+#Set up predefined argument##############################
 k.max <- 10
 n <- 100
 #Register # of cores to use
@@ -17,15 +15,30 @@ ncores <- 8
 registerDoParallel(ncores)
 #m should be somewhere around 0.2 - 0.8
 
-#Define resample function
-SubSample <- function(data, m){
+SubSample <- function(data, m) {
+  # Subset the data with proportion m 
+  #
+  # Args:
+  #   data: Data we want to subset
+  #   m: proportion we want subset from data
+  #
+  # Returns:
+  #   Return a dataframe with subsample.  
  n.row <- nrow(data)
  sample.index <- sample(1:n.row,floor(n.row*m))
  rtn <- data[sample.index, ]
  return (rtn)
 }
 
-InterIndex <- function(sub1, sub2){
+InterIndex <- function(sub1, sub2) {
+  # Search the index of sub1 and sub2 which they share same data point respectively.
+  #
+  # Args:
+  #   subl: Subset of data 
+  #   sub2: Another subset of data
+  #
+  # Returns:
+  #   Dataframe with index of sub1 and sub2 which point to same data point they share. 
   matched <- match(row.names(sub1), row.names(sub2))
   sub1.index <- which(!is.na(matched))
   sub2.index <- matched[sub1.index]
@@ -33,7 +46,7 @@ InterIndex <- function(sub1, sub2){
   return (rtn)
 }
 
-Similarity <- function(l1.inter, l2.inter, method ="matching"){
+Similarity <- function(l1.inter, l2.inter, method ="matching") {
   # Computes the similarity between with two cluster result vectors.
   #
   # Args:
@@ -56,7 +69,7 @@ Similarity <- function(l1.inter, l2.inter, method ="matching"){
     return (sum(c1 == c2)/d^2)
   }
   else if (method == "Jaccard") {
-    return (sum(c1 + c2 == 2)/sum(C1+C2 > 0))
+    return (sum(c1 + c2 == 2)/sum(c1+c2 > 0))
   }
   else if (method == "cosine") {
     return (sum(c1+c2 == 2)/ (sqrt(sum(c1)) * sqrt(sum(c2))))
@@ -69,11 +82,11 @@ Similarity <- function(l1.inter, l2.inter, method ="matching"){
 start.time <- Sys.time()
 foreach(num.cluster = 2:k.max) %dopar% {
   sim.vec <- NULL
-  for(i in 1:n){
+  for(i in 1:10){
    print(i)
-   sub1 <- SubSample(ling.ana, 0.3)
-   sub2 <- SubSample(ling.ana, 0.3)
-   inter <- InterIndex(sub1, sub2)
+    sub1 <- SubSample(ling.ana, 0.008)
+    sub2 <- SubSample(ling.ana, 0.008)
+    inter <- InterIndex(sub1, sub2)
    l1.inter <- kmeans(sub1, num.cluster)$cluster[inter$sub1.index]  
    l2.inter <- kmeans(sub2, num.cluster)$cluster[inter$sub2.index]
    sim.vec[i] <- Similarity(l1.inter, l2.inter, method = "matching")
