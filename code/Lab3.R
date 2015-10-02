@@ -86,10 +86,9 @@ Similarity <- function(l1.inter, l2.inter, method ="matching") {
 #Time comparison between c++ and R of simliarty function
 #R
 start.time <- Sys.time()
-foreach(num.cluster = 2:k.max) %dopar% {
+foreach(num.cluster = 2 : k.max) %dopar% {
   sim.vec <- NULL
-  for(i in 1:10){
-   print(i)
+  for(i in 1 : n){
     sub1 <- SubSample(ling.ana, 0.4)
     sub2 <- SubSample(ling.ana, 0.4)
     inter <- InterIndex(sub1, sub2)
@@ -103,10 +102,9 @@ duration <- Sys.time() - start.time
 
 #c++
 start.time1 <- Sys.time()
-foreach(num.cluster = 2:k.max) %dopar% {
+foreach(num.cluster = 2 : k.max) %dopar% {
   sim.vec1 <- NULL
-  for(i in 1:10){
-   print(i)
+  for(i in 1 : n){
     sub1 <- SubSample(ling.ana, 0.4)
     sub2 <- SubSample(ling.ana, 0.4)
     inter <- InterIndex(sub1, sub2)
