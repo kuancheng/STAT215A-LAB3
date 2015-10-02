@@ -7,20 +7,93 @@ library('doParallel')
 ##Read data
 load("../data/lingBinary.rdata")
 head(lingBinary)
-lingBinary_ana <- lingBinary[,-1:-5]
+ling.ana <- lingBinary[,-1:-5]
 ##Set up predefined argument##############################
-k_max <- 10
+k.max <- 10
 n <- 100
 #Register # of cores to use
 
 ncores <- 8
 registerDoParallel(ncores)
 #m should be somewhere around 0.2 - 0.8
+
+#Define resample function
+SubSample <- function(data, m){
+ n.row <- nrow(data)
+ sample.index <- sample(1:n.row,floor(n.row*m))
+ rtn <- data[sample.index, ]
+ return (rtn)
+}
+
+InterIndex <- function(sub1, sub2){
+  matched <- match(row.names(sub1), row.names(sub2))
+  sub1.index <- which(!is.na(matched))
+  sub2.index <- matched[sub1.index]
+  rtn <- data.frame(sub1.index, sub2.index)
+  return (rtn)
+}
+
+Similarity <- function(l1.inter, l2.inter, method ="matching"){
+  # Computes the similarity between with two cluster result vectors.
+  #
+  # Args:
+  #   l1.inter: index of subsample 1 which points to same data point shared with subsample 2
+  #   l2.inter: index of subsample 2 which points to same data point shared with subsample 1
+  #   method: methods used to calculate similarity. There are three available methods: matching
+  #           Jaccard and cosine, default is matching method. 
+  #
+  # Returns:
+  #   The similarity values of the result of cluster 1 and cluster 2
+  d <- length(l1.inter)
+  #Save booleans to save more space
+  c1 <- matrix(FALSE,d,d)
+  c2 <- matrix(FALSE,d,d)
+  for(i in 1:d){
+    c1[i, -i] <- (l1.inter[-i] == l1.inter[i])
+    c2[i, -i] <- (l2.inter[-i] == l2.inter[i])
+  }
+  if (method == "matching") { 
+    return (sum(c1 == c2)/d^2)
+  }
+  else if (method == "Jaccard") {
+    return (sum(c1 + c2 == 2)/sum(C1+C2 > 0))
+  }
+  else if (method == "cosine") {
+    return (sum(c1+c2 == 2)/ (sqrt(sum(c1)) * sqrt(sum(c2))))
+  }
+}
+
+
+
+
 start.time <- Sys.time()
-foreach(num_cluster = 2:k_max) %dopar% {
- model <- kmeans(lingBinary_ana, num_cluster) 
+foreach(num.cluster = 2:k.max) %dopar% {
+  sim.vec <- NULL
+  for(i in 1:n){
+   print(i)
+   sub1 <- SubSample(ling.ana, 0.3)
+   sub2 <- SubSample(ling.ana, 0.3)
+   inter <- InterIndex(sub1, sub2)
+   l1.inter <- kmeans(sub1, num.cluster)$cluster[inter$sub1.index]  
+   l2.inter <- kmeans(sub2, num.cluster)$cluster[inter$sub2.index]
+   sim.vec[i] <- Similarity(l1.inter, l2.inter, method = "matching")
+  }
+   return(sim.vec)
 }
 duration <- Sys.time() - start.time
 
 print(duration)
 
+#use for loop
+# start.time <- Sys.time()
+# for(num.cluster in 2:k.max) {
+#   for(i in 1:n){
+#    sub1 <- SubSample(ling.ana, 0.2)
+#    sub2 <- SubSample(ling.ana, 0.2)
+#    inter <- InterIndex(sub1, sub2)
+#    l1.inter <- kmeans(sub1, num.cluster)$cluster[inter$sub1.index]  
+#    l2.inter <- kmeans(sub2, num.cluster)$cluster[inter$sub2.index]
+#    print(Similarity(l1.inter, l2.inter, method = "matching"))
+#   }
+# }
+# duration2 <- Sys.time() - start.time
