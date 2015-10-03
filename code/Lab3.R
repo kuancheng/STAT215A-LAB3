@@ -9,7 +9,6 @@ sourceCpp('Lab3.cpp')
 
 #Read data
 load("../data/lingBinary.rdata")
-head(lingBinary)
 ling.ana <- lingBinary[,-1:-5]
 #Set up predefined argument##############################
 k.max <- 10
@@ -100,6 +99,7 @@ foreach(num.cluster = 2 : k.max) %dopar% {
 }
 duration <- Sys.time() - start.time
 
+
 #c++
 start.time1 <- Sys.time()
 foreach(num.cluster = 2 : k.max) %dopar% {
@@ -115,6 +115,9 @@ foreach(num.cluster = 2 : k.max) %dopar% {
    return(sim.vec1)
 }
 duration1 <- Sys.time() - start.time1
+
+print(duration)
+print(duration1)
 #Compare C++ and R for function similarity
 # x1 <- sample(1:10, 29000, replace = TRUE)
 # x2 <- sample(1:10, 29000, replace = TRUE)
