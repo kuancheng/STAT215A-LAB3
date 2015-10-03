@@ -84,12 +84,13 @@ Similarity <- function(l1.inter, l2.inter, method ="matching") {
 
 #Time comparison between c++ and R of simliarty function
 #R
+
 start.time <- Sys.time()
-foreach(num.cluster = 2 : k.max) %dopar% {
+foreach(num.cluster = 2 : k.max, .combine = cbind) %dopar% {
   sim.vec <- NULL
   for(i in 1 : n){
-    sub1 <- SubSample(ling.ana, 0.4)
-    sub2 <- SubSample(ling.ana, 0.4)
+    sub1 <- SubSample(ling.ana, 0.8)
+    sub2 <- SubSample(ling.ana, 0.8)
     inter <- InterIndex(sub1, sub2)
    l1.inter <- kmeans(sub1, num.cluster)$cluster[inter$sub1.index]  
    l2.inter <- kmeans(sub2, num.cluster)$cluster[inter$sub2.index]
@@ -102,7 +103,7 @@ duration <- Sys.time() - start.time
 
 #c++
 start.time1 <- Sys.time()
-foreach(num.cluster = 2 : k.max) %dopar% {
+sim.mat <- foreach(num.cluster = 2 : k.max, .combine = cbind) %dopar% {
   sim.vec1 <- NULL
   for(i in 1 : n){
     sub1 <- SubSample(ling.ana, 0.8)
@@ -115,6 +116,9 @@ foreach(num.cluster = 2 : k.max) %dopar% {
    return(sim.vec1)
 }
 duration1 <- Sys.time() - start.time1
+
+#write output into CSV file
+write.csv(sim.mat, file = "StabCluster.csv", row.names = FALSE)
 
 print(duration)
 print(duration1)
