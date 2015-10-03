@@ -105,8 +105,8 @@ start.time1 <- Sys.time()
 foreach(num.cluster = 2 : k.max) %dopar% {
   sim.vec1 <- NULL
   for(i in 1 : n){
-    sub1 <- SubSample(ling.ana, 0.4)
-    sub2 <- SubSample(ling.ana, 0.4)
+    sub1 <- SubSample(ling.ana, 0.8)
+    sub2 <- SubSample(ling.ana, 0.8)
     inter <- InterIndex(sub1, sub2)
    l1.inter <- kmeans(sub1, num.cluster)$cluster[inter$sub1.index]  
    l2.inter <- kmeans(sub2, num.cluster)$cluster[inter$sub2.index]
