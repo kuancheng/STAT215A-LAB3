@@ -109,8 +109,8 @@ sim.mat <- foreach(num.cluster = 2 : k.max, .combine = cbind) %dopar% {
     sub1 <- SubSample(ling.ana, 0.8)
     sub2 <- SubSample(ling.ana, 0.8)
     inter <- InterIndex(sub1, sub2)
-   l1.inter <- kmeans(sub1, num.cluster)$cluster[inter$sub1.index]  
-   l2.inter <- kmeans(sub2, num.cluster)$cluster[inter$sub2.index]
+    l1.inter <- kmeans(sub1, num.cluster)$cluster[inter$sub1.index]  
+    l2.inter <- kmeans(sub2, num.cluster)$cluster[inter$sub2.index]
    sim.vec1[i] <- SimilarityC(l1.inter, l2.inter, method = "matching")
   }
    return(sim.vec1)
