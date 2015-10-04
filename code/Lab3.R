@@ -102,6 +102,8 @@ duration <- Sys.time() - start.time
 
 
 #c++
+setwd("../code")
+sourceCpp('Lab3.cpp')
 start.time1 <- Sys.time()
 sim.mat <- foreach(num.cluster = 2 : k.max, .combine = cbind) %dopar% {
   sim.vec1 <- NULL
