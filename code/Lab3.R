@@ -85,41 +85,64 @@ Similarity <- function(l1.inter, l2.inter, method ="matching") {
 #Time comparison between c++ and R of simliarty function
 #R
 
-start.time <- Sys.time()
-foreach(num.cluster = 2 : k.max, .combine = cbind) %dopar% {
-  sim.vec <- NULL
-  for(i in 1 : n){
-    sub1 <- SubSample(ling.ana, 0.4)
-    sub2 <- SubSample(ling.ana, 0.4)
-    inter <- InterIndex(sub1, sub2)
-   l1.inter <- kmeans(sub1, num.cluster)$cluster[inter$sub1.index]  
-   l2.inter <- kmeans(sub2, num.cluster)$cluster[inter$sub2.index]
-   sim.vec[i] <- Similarity(l1.inter, l2.inter, method = "matching")
-  }
-   return(sim.vec)
-}
-duration <- Sys.time() - start.time
+# start.time <- Sys.time()
+# foreach(num.cluster = 2 : k.max, .combine = cbind) %dopar% {
+#   sim.vec <- NULL
+#   for(i in 1 : n){
+#     sub1 <- SubSample(ling.ana, 0.4)
+#     sub2 <- SubSample(ling.ana, 0.4)
+#     inter <- InterIndex(sub1, sub2)
+#    l1.inter <- kmeans(sub1, num.cluster)$cluster[inter$sub1.index]  
+#    l2.inter <- kmeans(sub2, num.cluster)$cluster[inter$sub2.index]
+#    sim.vec[i] <- Similarity(l1.inter, l2.inter, method = "matching")
+#   }
+#    return(sim.vec)
+# }
+# duration <- Sys.time() - start.time
 
 
 #c++
 setwd("../code")
 sourceCpp('Lab3.cpp')
-start.time1 <- Sys.time()
-sim.mat <- foreach(num.cluster = 2 : k.max, .combine = cbind) %dopar% {
-  sim.vec1 <- NULL
-  for(i in 1 : n){
-    sub1 <- SubSample(ling.ana, 0.8)
-    sub2 <- SubSample(ling.ana, 0.8)
-    inter <- InterIndex(sub1, sub2)
-    l1.inter <- kmeans(sub1, num.cluster)$cluster[inter$sub1.index]  
-    l2.inter <- kmeans(sub2, num.cluster)$cluster[inter$sub2.index]
-   sim.vec1[i] <- SimilarityC(l1.inter, l2.inter, method = "matching")
+StabCluter <- function(data, m, n, implement = "C++", method = "matching"){
+  sim.vec <- NULL
+  if (implement == "R"){
+    sim.mat <- foreach(num.cluster = 2 : k.max, .combine = cbind) %dopar% {
+    for(i in 1 : n){
+      sub1 <- SubSample(data, m)
+      sub2 <- SubSample(data, m)
+      inter <- InterIndex(sub1, sub2)
+      l1.inter <- kmeans(sub1, num.cluster)$cluster[inter$sub1.index]  
+      l2.inter <- kmeans(sub2, num.cluster)$cluster[inter$sub2.index]
+      sim.vec[i] <- Similarity(l1.inter, l2.inter, method = method)
+    }
+       return(sim.vec)
+    }
+  }else{
+    sim.mat <- foreach(num.cluster = 2 : k.max, .combine = cbind) %dopar% {
+    for(i in 1 : n){
+      sub1 <- SubSample(data, m)
+      sub2 <- SubSample(data, m)
+      inter <- InterIndex(sub1, sub2)
+      l1.inter <- kmeans(sub1, num.cluster)$cluster[inter$sub1.index]  
+      l2.inter <- kmeans(sub2, num.cluster)$cluster[inter$sub2.index]
+      sim.vec[i] <- SimilarityC(l1.inter, l2.inter, method = method)
+    }
+     return(sim.vec)
   }
-   return(sim.vec1)
+  }
+  return(sim.mat)
 }
-duration1 <- Sys.time() - start.time1
 
 #write output into CSV file
+start.time <- Sys.time()
+output <- StabCluter(ling.ana, 0.4, 20, implement = "C++", method = "matching")
+duration <- Sys.time() - start.time
+
+start.time <- Sys.time()
+output <- StabCluter(ling.ana, 0.4, 20, implement = "R", method = "matching")
+duration1 <- Sys.time() - start.time
+
 write.csv(sim.mat, file = "StabCluster.csv", row.names = FALSE)
 
 print(duration)
