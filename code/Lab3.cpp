@@ -14,6 +14,16 @@ using namespace Rcpp;
 // [[Rcpp::export]]
 
 double SimilarityC(NumericVector l1Inter, NumericVector l2Inter, String method = "matching") {
+  // Computes the similarity between with two cluster result vectors via C++.
+  //
+  // Args:
+  //   l1.inter: index of subsample 1 which points to same data point shared with subsample 2
+  //   l2.inter: index of subsample 2 which points to same data point shared with subsample 1
+  //   method: methods used to calculate similarity. There are three available methods: matching
+  //           Jaccard and cosine, default is matching method. 
+  //
+  // Returns:
+  //   The similarity values of the result of cluster 1 and cluster 2
 	int d = l1Inter.size();
 	double n11 = 0;
 	double n10 = 0;

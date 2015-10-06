@@ -13,7 +13,7 @@ using namespace Rcpp;
 
 // [[Rcpp::export]]
 
-double SimilarityC(NumericVector l1Inter, NumericVector l2Inter, String method = "matching") {
+double SimilarityCF(NumericVector l1Inter, NumericVector l2Inter, String method = "matching") {
   int d = l1Inter.size();
   int slot = pow(d,2);
   double n11 = 0;

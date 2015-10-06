@@ -82,30 +82,22 @@ Similarity <- function(l1.inter, l2.inter, method ="matching") {
 }
 
 
-
-#Time comparison between c++ and R of simliarty function
-#R
-
-# start.time <- Sys.time()
-# foreach(num.cluster = 2 : k.max, .combine = cbind) %dopar% {
-#   sim.vec <- NULL
-#   for(i in 1 : n){
-#     sub1 <- SubSample(ling.ana, 0.4)
-#     sub2 <- SubSample(ling.ana, 0.4)
-#     inter <- InterIndex(sub1, sub2)
-#    l1.inter <- kmeans(sub1, num.cluster)$cluster[inter$sub1.index]  
-#    l2.inter <- kmeans(sub2, num.cluster)$cluster[inter$sub2.index]
-#    sim.vec[i] <- Similarity(l1.inter, l2.inter, method = "matching")
-#   }
-#    return(sim.vec)
-# }
-# duration <- Sys.time() - start.time
-
-
-#c++
 setwd("../code")
 sourceCpp('Lab3.cpp')
 StabCluter <- function(data, m, n, implement = "C++", method = "matching"){
+  # Implement stable cluster algorithm suggested by Benhur 
+  #
+  # Args:
+  #   data: data to be clusted.
+  #   m: proportion we want subset from data.
+  #   n: number of repetitions implementing subsetting.
+  #   implement: the way implementing the similarity function,there are C++ and R,
+  #              default is C++.
+  #   method: methods used to calculate similarity. There are three available methods: matching
+  #           Jaccard and cosine, default is matching method. 
+  #      
+  # Returns:
+  #   The similarity matrix from cluster 2 to 10.
   sim.vec <- NULL
   if (implement == "R"){
     sim.mat <- foreach(num.cluster = 2 : k.max, .combine = cbind) %dopar% {
@@ -134,6 +126,8 @@ StabCluter <- function(data, m, n, implement = "C++", method = "matching"){
   }
   return(sim.mat)
 }
+ 
+sourceCpp("Lab3_Fadi.cpp")
 
 #write output into CSV file
 output.matching <- StabCluter(ling.ana, m = 0.8, n = 100, implement = "C++", method = "matching")
@@ -146,10 +140,10 @@ write.csv(output.jaccard, file = "jaccard.csv", row.names = FALSE)
 write.csv(output.cosine, file = "cosine.csv", row.names = FALSE)
 
 #Compare C++ and R for function similarity
-# x1 <- sample(1:10, 29000, replace = TRUE)
-# x2 <- sample(1:10, 29000, replace = TRUE)
-# microbenchmark(Similarity(x1, x2, "matching"), SimilarityC(x1, x2, "matching"))
-# Similarity(x1, x2, "matching")
-# SimilarityC(x1, x2)
+x1 <- sample(1:10, 29000, replace = TRUE)
+x2 <- sample(1:10, 29000, replace = TRUE)
+microbenchmark(SimilarityC(x1, x2, "matching"), SimilarityCF(x1, x2, "matching"))
+SimilarityC(x1, x2, "matching")
+SimilarityCF(x1, x2, "matching")
 
 
