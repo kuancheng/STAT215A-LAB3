@@ -136,9 +136,9 @@ StabCluter <- function(data, m, n, implement = "C++", method = "matching"){
 }
 
 #write output into CSV file
-output.matching <- StabCluter(ling.ana, 0.2, 10, implement = "C++", method = "matching")
-output.jaccard <- StabCluter(ling.ana, 0.2, 10, implement = "C++", method = "Jaccard")
-output.cosine <- StabCluter(ling.ana, 0.2, 10, implement = "C++", method = "cosine")
+output.matching <- StabCluter(ling.ana, m = 0.8, n = 100, implement = "C++", method = "matching")
+output.jaccard <- StabCluter(ling.ana, m = 0.8, n = 100, implement = "C++", method = "Jaccard")
+output.cosine <- StabCluter(ling.ana, m = 0.8, n= 100, implement = "C++", method = "cosine")
 
 
 write.csv(output.matching, file = "matching.csv", row.names = FALSE)
