@@ -8,6 +8,7 @@ library('microbenchmark')
 sourceCpp('Lab3.cpp')
 
 #Read data
+
 load("../data/lingBinary.rdata")
 ling.ana <- lingBinary[,-1:-5]
 #Set up predefined argument##############################
@@ -135,18 +136,15 @@ StabCluter <- function(data, m, n, implement = "C++", method = "matching"){
 }
 
 #write output into CSV file
-start.time <- Sys.time()
-output <- StabCluter(ling.ana, 0.4, 20, implement = "C++", method = "matching")
-duration <- Sys.time() - start.time
+output.matching <- StabCluter(ling.ana, 0.2, 10, implement = "C++", method = "matching")
+output.jaccard <- StabCluter(ling.ana, 0.2, 10, implement = "C++", method = "Jaccard")
+output.cosine <- StabCluter(ling.ana, 0.2, 10, implement = "C++", method = "cosine")
 
-start.time <- Sys.time()
-output <- StabCluter(ling.ana, 0.4, 20, implement = "R", method = "matching")
-duration1 <- Sys.time() - start.time
 
-write.csv(sim.mat, file = "StabCluster.csv", row.names = FALSE)
+write.csv(output.matching, file = "matching.csv", row.names = FALSE)
+write.csv(output.jaccard, file = "jaccard.csv", row.names = FALSE)
+write.csv(output.cosine, file = "cosine.csv", row.names = FALSE)
 
-print(duration)
-print(duration1)
 #Compare C++ and R for function similarity
 # x1 <- sample(1:10, 29000, replace = TRUE)
 # x2 <- sample(1:10, 29000, replace = TRUE)
