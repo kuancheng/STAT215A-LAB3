@@ -139,20 +139,21 @@ write.csv(output.jaccard, file = "jaccard.csv", row.names = FALSE)
 write.csv(output.cosine, file = "cosine.csv", row.names = FALSE)
 
 #Compare C++ and R for function similarity
-#x1 <- sample(1:10, 29000, replace = TRUE)
-#x2 <- sample(1:10, 29000, replace = TRUE)
-#microbenchmark(Similarity(x1, x2, "matching"), SimilarityC(x1, x2, "matching"))
+x1 <- sample(1:10, 29000, replace = TRUE)
+x2 <- sample(1:10, 29000, replace = TRUE)
+microbenchmark(Similarity(x1, x2, "matching"), SimilarityC(x1, x2, "matching"))
 
-#start.time <- Sys.time()
-#output.matching <- StabCluter(ling.ana, m = 0.35, n = 100, implement = "C++", method = "matching")
-#duration <- Sys.time() - start.time
+#Compare C++ and R for whole algorithm with m = 0.35
+start.time <- Sys.time()
+output.matching <- StabCluter(ling.ana, m = 0.35, n = 100, implement = "C++", method = "matching")
+duration <- Sys.time() - start.time
 
 
-#start.time <- Sys.time()
-#output.matching <- StabCluter(ling.ana, m = 0.35, n = 100, implement = "R", method = "matching")
-#duration1 <- Sys.time() - start.time
+start.time <- Sys.time()
+output.matching <- StabCluter(ling.ana, m = 0.35, n = 100, implement = "R", method = "matching")
+duration1 <- Sys.time() - start.time
 
-#print(duration)
-#print(duration1)
+print(duration)
+print(duration1)
 
 
