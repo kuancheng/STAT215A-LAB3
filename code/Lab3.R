@@ -129,14 +129,14 @@ StabCluter <- function(data, m, n, implement = "C++", method = "matching"){
  
 
 #write output into CSV file
-output.matching <- StabCluter(ling.ana, m = 0.8, n = 100, implement = "C++", method = "matching")
-output.jaccard <- StabCluter(ling.ana, m = 0.8, n = 100, implement = "C++", method = "Jaccard")
-output.cosine <- StabCluter(ling.ana, m = 0.8, n= 100, implement = "C++", method = "cosine")
+#output.matching <- StabCluter(ling.ana, m = 0.8, n = 100, implement = "C++", method = "matching")
+#output.jaccard <- StabCluter(ling.ana, m = 0.8, n = 100, implement = "C++", method = "Jaccard")
+#output.cosine <- StabCluter(ling.ana, m = 0.8, n= 100, implement = "C++", method = "cosine")
 
 
-write.csv(output.matching, file = "matching.csv", row.names = FALSE)
-write.csv(output.jaccard, file = "jaccard.csv", row.names = FALSE)
-write.csv(output.cosine, file = "cosine.csv", row.names = FALSE)
+#write.csv(output.matching, file = "matching.csv", row.names = FALSE)
+#write.csv(output.jaccard, file = "jaccard.csv", row.names = FALSE)
+#write.csv(output.cosine, file = "cosine.csv", row.names = FALSE)
 
 #Compare C++ and R for function similarity
 #x1 <- sample(1:10, 29000, replace = TRUE)
