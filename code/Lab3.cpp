@@ -73,5 +73,9 @@ x2 <- c(1, 1, 2, 3, 5, 6, 7)
 SimilarityC(x1, x2, "Jaccard")
 SimilarityC(x1, x2, "matching")
 SimilarityC(x1, x2, "cosine")
+Similarity(x1, x2, "Jaccard")
+Similarity(x1, x2, "matching")
+Similarity(x1, x2, "cosine")
+Similarity(x1, x2, "Jaccard")
 
 */

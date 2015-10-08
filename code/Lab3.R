@@ -11,8 +11,9 @@ sourceCpp('Lab3.cpp')
 
 load("../data/lingBinary.rdata")
 ling.ana <- lingBinary[,-1:-5]
+ling.ana$id <- 1 : nrow(ling.ana)
 #Set up predefined argument##############################
-k.max <- 10
+k.max <- 2
 n <- 100
 #Register # of cores to use
 
@@ -29,10 +30,10 @@ SubSample <- function(data, m) {
   #
   # Returns:
   #   Return a dataframe with subsample.  
- n.row <- nrow(data)
- sample.index <- sample(1:n.row,floor(n.row*m))
- rtn <- data[sample.index, ]
- return (rtn)
+   n.row <- nrow(data)
+   sample.index <- sample(1 : n.row, floor(n.row*m))
+   rtn <- data[sample.index, ]
+   return (rtn)
 }
 
 InterIndex <- function(sub1, sub2) {
@@ -100,25 +101,26 @@ StabCluter <- function(data, m, n, implement = "C++", method = "matching"){
   #   The similarity matrix from cluster 2 to 10.
   sim.vec <- NULL
   if (implement == "R"){
-    sim.mat <- foreach(num.cluster = 2 : k.max, .combine = cbind) %dopar% {
+    sim.mat <- foreach(num.cluster = 4 : 4, .combine = cbind) %dopar% {
     for(i in 1 : n){
       sub1 <- SubSample(data, m)
       sub2 <- SubSample(data, m)
       inter <- InterIndex(sub1, sub2)
-      l1.inter <- kmeans(sub1, num.cluster)$cluster[inter$sub1.index]  
-      l2.inter <- kmeans(sub2, num.cluster)$cluster[inter$sub2.index]
+      l1.inter <- kmeans(sub1, num.cluster)$cluster[row.names(sub1)[inter$sub1.index]]  
+      l2.inter <- kmeans(sub2, num.cluster)$cluster[row.names(sub2)[inter$sub2.index]]
       sim.vec[i] <- Similarity(l1.inter, l2.inter, method = method)
     }
        return(sim.vec)
     }
   }else{
-    sim.mat <- foreach(num.cluster = 2 : k.max, .combine = cbind) %dopar% {
+    sim.mat <- foreach(num.cluster = 4 : 4, .combine = cbind) %dopar% {
     for(i in 1 : n){
+      print(i)
       sub1 <- SubSample(data, m)
       sub2 <- SubSample(data, m)
       inter <- InterIndex(sub1, sub2)
-      l1.inter <- kmeans(sub1, num.cluster)$cluster[inter$sub1.index]  
-      l2.inter <- kmeans(sub2, num.cluster)$cluster[inter$sub2.index]
+      l1.inter <- kmeans(sub1, num.cluster)$cluster[row.names(sub1)[inter$sub1.index]] 
+      l2.inter <- kmeans(sub2, num.cluster)$cluster[row.names(sub2)[inter$sub2.index]]
       sim.vec[i] <- SimilarityC(l1.inter, l2.inter, method = method)
     }
      return(sim.vec)
@@ -130,13 +132,13 @@ StabCluter <- function(data, m, n, implement = "C++", method = "matching"){
 
 #write output into CSV file
 output.matching <- StabCluter(ling.ana, m = 0.8, n = 100, implement = "C++", method = "matching")
-output.jaccard <- StabCluter(ling.ana, m = 0.8, n = 100, implement = "C++", method = "Jaccard")
+output.jaccard <- StabCluter(ling.ana, m = 0.2, n = 10, implement = "R", method = "Jaccard")
 output.cosine <- StabCluter(ling.ana, m = 0.8, n= 100, implement = "C++", method = "cosine")
 
 
-write.csv(output.matching, file = "matching.csv", row.names = FALSE)
-write.csv(output.jaccard, file = "jaccard.csv", row.names = FALSE)
-write.csv(output.cosine, file = "cosine.csv", row.names = FALSE)
+write.csv(output.matching, file = "matching_cl.csv", row.names = FALSE)
+write.csv(output.jaccard, file = "jaccard_cl.csv", row.names = FALSE)
+write.csv(output.cosine, file = "cosine_cl.csv", row.names = FALSE)
 
 #Compare C++ and R for function similarity
 x1 <- sample(1:10, 29000, replace = TRUE)
