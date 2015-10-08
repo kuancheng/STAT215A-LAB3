@@ -1,8 +1,10 @@
 #Read Library
-library('foreach')
-library('doParallel')
-library('Rcpp')
-library('microbenchmark')
+library(foreach)
+library(doParallel)
+library(Rcpp)
+library(microbenchmark)
+library(ggplot2)
+library(reshape2)
 
 
 #Read data and clean data
@@ -113,6 +115,9 @@ StabCluter <- function(data, m, n, k.max, implement = "C++", method = "matching"
     sim.mat <- foreach(num.cluster = 2 : k.max, .combine = cbind) %dopar% {
       sim.vec <- NULL
       for(i in 1 : n){
+          #We wish avoid save matrix here as much as possilbe
+          #Since matrix easily run out of memory
+          #also need more computation to implement
           sub1 <- SubSample(data, m)
           sub2 <- SubSample(data, m)
           inter <- InterIndex(sub1, sub2)
@@ -131,10 +136,31 @@ StabCluter <- function(data, m, n, k.max, implement = "C++", method = "matching"
 
 #Compare Time difference between R and C++
 
-#Compare C++ and R for function similarity with size 5000
+# 1. compare C++ and R for function similarity with size 5000
+
 x1 <- sample(1:10, 5000, replace = TRUE)
 x2 <- sample(1:10, 5000, replace = TRUE)
 microbenchmark(Similarity(x1, x2, "matching"), SimilarityC(x1, x2, "matching"))
+
+# 2. record time eclipse for Si,
+duration.r <- NULL
+duration.c <- NULL
+for(i in  1:150){
+  print(i)
+  x1 <- sample(1:10, 100 * i, replace = TRUE)
+  x2 <- sample(1:10, 100 * i, replace = TRUE)
+  
+  start.time <- Sys.time()
+  Similarity(x1, x2, "matching")
+  duration.r[i] <- as.numeric(Sys.time() - start.time, units = 'mins')
+  
+  start.time <- Sys.time()
+  SimilarityC(x1, x2, "matching")
+  duration.c[i] <- as.numeric(Sys.time() - start.time, units = 'mins')
+}
+
+duration.r
+duration.c
 
 
 
@@ -151,5 +177,11 @@ write.csv(output.jaccard, file = "jaccard_cl_new.csv", row.names = FALSE)
 output.cosine <- StabCluter(ling.ana, m = 0.8, n= 100, k.max = 10, implement = "C++", method = "cosine")
 write.csv(output.cosine, file = "cosine_cl_new.csv", row.names = FALSE)
 
+#change unit to mins
+time.data <- data.frame(k = 1:150 * 100, duration.r, duration.c)
 
+melt.time <- melt(time.data, id="k")
+names(melt.time)[2:3] <- c("language_type", "time_mins")
 
+ggplot(data = melt.time, aes(x = k, y = time_mins, colour = language_type)) +
+  geom_line()
