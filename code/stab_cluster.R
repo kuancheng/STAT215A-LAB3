@@ -1,15 +1,19 @@
 #Read Library
-library('foreach')
-library('doParallel')
-library('Rcpp')
-library('microbenchmark')
+library(foreach)
+library(doParallel)
+library(Rcpp)
+library(microbenchmark)
+library(ggplot2)
+library(reshape2)
 
 
 #Read data and clean data
-#dir ="./Binary.rdata"
-load("../data/lingBinary.rdata")
+dir <- "~/Desktop/STAT215A/Lab3/STAT215A-LAB3/data/lingBinary.rdata"
+load(dir)
+
 ling.ana <- lingBinary[, -1:-6]
-ling.ana$id <- 1:nrow(ling.ana)
+#change row.names of ling.ana to make it consistent with index
+row.names(ling.ana) <- 1:nrow(ling.ana)
 
 
 SubSample <- function(data, m) {
@@ -22,10 +26,30 @@ SubSample <- function(data, m) {
   # Returns:
   #   Return a dataframe with subsample.  
   n.row <- nrow(data)
-  sample.index <- sample(1:n.row, floor(n.row*m), replace = FALSE)
+  sample.index <- sample(1:n.row, floor(n.row * m), replace = FALSE)
   rtn <- data[sample.index, ]
   return (rtn)
 }
+
+
+
+InterIndex <- function(sub1, sub2) {
+  # Search the index of sub1 and sub2 which they share same data point respectively.
+  #
+  # Args:
+  #   subl: Subset of data 
+  #   sub2: Another subset of data
+  #
+  # Returns:
+  #   Dataframe with index of sub1 and sub2 which point to same data point they share. 
+  matched <- match(row.names(sub1), row.names(sub2))
+  sub1.index <- which(!is.na(matched))
+  sub2.index <- matched[sub1.index]
+  rtn <- data.frame(sub1.index, sub2.index)
+  return (rtn)
+}
+
+
 
 Similarity <- function(l1.inter, l2.inter, method ="matching") {
   # Computes the similarity between with two cluster result vectors.
@@ -61,8 +85,10 @@ Similarity <- function(l1.inter, l2.inter, method ="matching") {
 
 
 
-
+#source c++ code and make sure get same result as R
+dir <- "~/Desktop/STAT215A/Lab3/STAT215A-LAB3/data/"
 sourceCpp('Lab3.cpp')
+
 StabCluter <- function(data, m, n, k.max, implement = "C++", method = "matching"){
   # Implement stable cluster algorithm suggested by Benhur 
   #
@@ -84,7 +110,7 @@ StabCluter <- function(data, m, n, k.max, implement = "C++", method = "matching"
     registerDoParallel(ncores)
     #Assign which function to use
     if (implement == "R") {
-      myfun <-  Similarity
+      myfun <- Similarity
     }else{
       myfun <- SimilarityC
     }
@@ -92,26 +118,16 @@ StabCluter <- function(data, m, n, k.max, implement = "C++", method = "matching"
     sim.mat <- foreach(num.cluster = 2 : k.max, .combine = cbind) %dopar% {
       sim.vec <- NULL
       for(i in 1 : n){
+          #We wish avoid save matrix here as much as possilbe
+          #Since matrix easily run out of memory
+          #also need more computation to implement
           sub1 <- SubSample(data, m)
           sub2 <- SubSample(data, m)
+          inter <- InterIndex(sub1, sub2)
           
-          #Do k-means and save it as datafrmae
-          result.1 <- data.frame(kmeans(sub1[ , -ncol(sub1)], num.cluster)$cluster)  
-          result.2 <- data.frame(kmeans(sub2[ , -ncol(sub2)], num.cluster)$cluster)
-          
-          #combine cluster result
-          sub1.clust <- cbind(sub1$id, result.1)
-          names(sub1.clust)[1] <- "id"
-          names(sub1.clust)[2] <- "cluster"
-          sub2.clust <- data.frame(cbind(sub2$id, result.2))
-          names(sub2.clust)[1] <- "id"
-          names(sub2.clust)[2] <- "cluster"
-         
-          #extract intersect part 
-          intersect <- merge(sub1.clust, sub2.clust, by=c("id"))
-          l1.inter <- intersect$cluster.x
-          l2.inter <- intersect$cluster.y
-         
+          #Get cluster vectors of intersect point
+          l1.inter <- kmeans(sub1, num.cluster)$cluster[row.names(sub1)[inter$sub1.index]]  
+          l2.inter <- kmeans(sub2, num.cluster)$cluster[row.names(sub2)[inter$sub2.index]]
           sim.vec[i] <- myfun(l1.inter, l2.inter, method = method)
          
         }
@@ -122,23 +138,62 @@ StabCluter <- function(data, m, n, k.max, implement = "C++", method = "matching"
 
 
 #Compare Time difference between R and C++
+
+# 1. record time eclipse for Similarity for each version of function.
+duration.r <- NULL
+duration.c <- NULL
+for(i in  1:150){
+  print(i)
+  x1 <- sample(1:10, 100 * i, replace = TRUE)
+  x2 <- sample(1:10, 100 * i, replace = TRUE)
+  
+  start.time <- Sys.time()
+  Similarity(x1, x2, "matching")
+  duration.r[i] <- as.numeric(Sys.time() - start.time, units = 'mins')
+  
+  start.time <- Sys.time()
+  SimilarityC(x1, x2, "matching")
+  duration.c[i] <- as.numeric(Sys.time() - start.time, units = 'mins')
+}
+
+#change unit to mins
+time.data <- data.frame(k = 1:150 * 100, duration.r, duration.c)
+
+melt.time <- melt(time.data, id="k")
+names(melt.time)[2:3] <- c("language_type", "time_mins")
+
+ggplot(data = melt.time, aes(x = k, y = time_mins, colour = language_type)) +
+  geom_line()
+
+
+ 
+
+#2. Compare C++ and R for whole algorithm with m = 0.35, k is around 5511
 start.time <- Sys.time()
-StabCluter(ling.ana, m = 0.35, n = 100, k.max = 10,  implement = "R", method = "Jaccard")
-duration <- Sys.time() - start.time
+output.matching <- StabCluter(ling.ana, m = 0.35, n = 100, k.max = 10, implement = "C++", method = "matching")
+duration.c <- Sys.time() - start.time
+
 
 start.time <- Sys.time()
-output.jaccard <- StabCluter(ling.ana, m = 0.35, n = 100, k.max = 10, implement = "C++", method = "Jaccard")
-duration1 <- Sys.time() - start.time
+output.matching <- StabCluter(ling.ana, m = 0.35, n = 100, k.max = 10, implement = "R", method = "matching")
+duration.r <- Sys.time() - start.time
+
+print(duration.c)
+print(duration.r)
+
+
+
+
+
 
 #produce output of csv for plot
 output.matching <- StabCluter(ling.ana, m = 0.8, n = 100, k.max = 10, implement = "C++", method = "matching")
-write.csv(output.matching, file = "matching_cl.csv", row.names = FALSE)
+write.csv(output.matching, file = "matching_cl_new.csv", row.names = FALSE)
 
 output.jaccard <- StabCluter(ling.ana, m = 0.8, n = 100, k.max = 10, implement = "C++", method = "Jaccard")
-write.csv(output.jaccard, file = "jaccard_cl.csv", row.names = FALSE)
+write.csv(output.matching, file = "jaccard_cl_new.csv", row.names = FALSE)
+
 
 output.cosine <- StabCluter(ling.ana, m = 0.8, n= 100, k.max = 10, implement = "C++", method = "cosine")
-write.csv(output.cosine, file = "cosine_cl.csv", row.names = FALSE)
-
-
+write.csv(output.cosine, file = "cosine_cl_new.csv", row.names = FALSE)
 
