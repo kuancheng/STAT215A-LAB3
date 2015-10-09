@@ -8,8 +8,9 @@ library(reshape2)
 
 
 #Read data and clean data
-#dir ="./Binary.rdata"
-load("../data/lingBinary.rdata")
+dir <- "~/Desktop/STAT215A/Lab3/STAT215A-LAB3/data/lingBinary.rdata"
+load(dir)
+
 ling.ana <- lingBinary[, -1:-6]
 #change row.names of ling.ana to make it consistent with index
 row.names(ling.ana) <- 1:nrow(ling.ana)
@@ -85,7 +86,9 @@ Similarity <- function(l1.inter, l2.inter, method ="matching") {
 
 
 #source c++ code and make sure get same result as R
+dir <- "~/Desktop/STAT215A/Lab3/STAT215A-LAB3/data/"
 sourceCpp('Lab3.cpp')
+
 StabCluter <- function(data, m, n, k.max, implement = "C++", method = "matching"){
   # Implement stable cluster algorithm suggested by Benhur 
   #
@@ -136,13 +139,7 @@ StabCluter <- function(data, m, n, k.max, implement = "C++", method = "matching"
 
 #Compare Time difference between R and C++
 
-# 1. compare C++ and R for function similarity with size 5000
-
-x1 <- sample(1:10, 5000, replace = TRUE)
-x2 <- sample(1:10, 5000, replace = TRUE)
-microbenchmark(Similarity(x1, x2, "matching"), SimilarityC(x1, x2, "matching"))
-
-# 2. record time eclipse for Si,
+# 1. record time eclipse for Similarity for each version of function.
 duration.r <- NULL
 duration.c <- NULL
 for(i in  1:150){
@@ -159,8 +156,30 @@ for(i in  1:150){
   duration.c[i] <- as.numeric(Sys.time() - start.time, units = 'mins')
 }
 
-duration.r
-duration.c
+#change unit to mins
+time.data <- data.frame(k = 1:150 * 100, duration.r, duration.c)
+
+melt.time <- melt(time.data, id="k")
+names(melt.time)[2:3] <- c("language_type", "time_mins")
+
+ggplot(data = melt.time, aes(x = k, y = time_mins, colour = language_type)) +
+  geom_line()
+
+
+ 
+
+#2. Compare C++ and R for whole algorithm with m = 0.35, k is around 5511
+start.time <- Sys.time()
+output.matching <- StabCluter(ling.ana, m = 0.35, n = 100, k.max = 10, implement = "C++", method = "matching")
+duration.c <- Sys.time() - start.time
+
+
+start.time <- Sys.time()
+output.matching <- StabCluter(ling.ana, m = 0.35, n = 100, k.max = 10, implement = "R", method = "matching")
+duration.r <- Sys.time() - start.time
+
+print(duration.c)
+print(duration.r)
 
 
 
@@ -172,16 +191,9 @@ output.matching <- StabCluter(ling.ana, m = 0.8, n = 100, k.max = 10, implement 
 write.csv(output.matching, file = "matching_cl_new.csv", row.names = FALSE)
 
 output.jaccard <- StabCluter(ling.ana, m = 0.8, n = 100, k.max = 10, implement = "C++", method = "Jaccard")
-write.csv(output.jaccard, file = "jaccard_cl_new.csv", row.names = FALSE)
+write.csv(output.matching, file = "jaccard_cl_new.csv", row.names = FALSE)
+
 
 output.cosine <- StabCluter(ling.ana, m = 0.8, n= 100, k.max = 10, implement = "C++", method = "cosine")
 write.csv(output.cosine, file = "cosine_cl_new.csv", row.names = FALSE)
 
-#change unit to mins
-time.data <- data.frame(k = 1:150 * 100, duration.r, duration.c)
-
-melt.time <- melt(time.data, id="k")
-names(melt.time)[2:3] <- c("language_type", "time_mins")
-
-ggplot(data = melt.time, aes(x = k, y = time_mins, colour = language_type)) +
-  geom_line()
